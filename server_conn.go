@@ -84,6 +84,11 @@ type serverConn struct {
 var InvalidError = errors.New("invalid transport")
 
 func newServerConn(id string, w http.ResponseWriter, r *http.Request, callback serverCallback) (*serverConn, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in newServerConn: %v", err)
+		}
+	}()
 	transportName := r.URL.Query().Get("transport")
 	creater := callback.transports().Get(transportName)
 	if creater.Name == "" {
@@ -122,6 +127,11 @@ func (c *serverConn) Request() *http.Request {
 }
 
 func (c *serverConn) NextReader() (MessageType, io.ReadCloser, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in NextReader: %v", err)
+		}
+	}()
 	if c.getState() == stateClosed {
 		return MessageBinary, nil, io.EOF
 	}
@@ -133,6 +143,11 @@ func (c *serverConn) NextReader() (MessageType, io.ReadCloser, error) {
 }
 
 func (c *serverConn) NextWriter(t MessageType) (io.WriteCloser, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in NextWriter: %v", err)
+		}
+	}()
 	switch c.getState() {
 	case stateUpgrading:
 		for i := 0; i < 30; i++ {
@@ -159,6 +174,11 @@ func (c *serverConn) NextWriter(t MessageType) (io.WriteCloser, error) {
 }
 
 func (c *serverConn) Close() error {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in Close: %v", err)
+		}
+	}()
 	if c.getState() != stateNormal && c.getState() != stateUpgrading {
 		return nil
 	}
@@ -180,6 +200,11 @@ func (c *serverConn) Close() error {
 }
 
 func (c *serverConn) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in ServeHTTP: %v", err)
+		}
+	}()
 	transportName := r.URL.Query().Get("transport")
 	if c.currentName != transportName {
 		creater := c.callback.transports().Get(transportName)
@@ -199,6 +224,11 @@ func (c *serverConn) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in OnPacket: %v", err)
+		}
+	}()
 	if s := c.getState(); s != stateNormal && s != stateUpgrading {
 		return
 	}
@@ -238,6 +268,11 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 }
 
 func (c *serverConn) OnClose(server transport.Server) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in OnClose: %v", err)
+		}
+	}()
 	if t := c.getUpgrade(); server == t {
 		c.setUpgrading("", nil)
 		t.Close()
@@ -259,6 +294,11 @@ func (c *serverConn) OnClose(server transport.Server) {
 }
 
 func (s *serverConn) onOpen() error {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in onOpen: %v", err)
+		}
+	}()
 	upgrades := []string{}
 	for name := range s.callback.transports() {
 		if name == s.currentName {
@@ -315,6 +355,11 @@ func (c *serverConn) setCurrent(name string, s transport.Server) {
 }
 
 func (c *serverConn) setUpgrading(name string, s transport.Server) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in setUpgrading: %v", err)
+		}
+	}()
 	c.transportLocker.Lock()
 	defer c.transportLocker.Unlock()
 
@@ -324,6 +369,12 @@ func (c *serverConn) setUpgrading(name string, s transport.Server) {
 }
 
 func (c *serverConn) upgraded() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in upgraded: %v", err)
+		}
+	}()
+
 	c.transportLocker.Lock()
 
 	current := c.current
