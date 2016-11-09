@@ -11,6 +11,7 @@ import (
 
 	"github.com/azhao1981/go-engine.io/polling"
 	"github.com/azhao1981/go-engine.io/websocket"
+	"log"
 )
 
 type config struct {
@@ -132,6 +133,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		n := atomic.AddInt32(&s.currentConnection, 1)
+		log.Printf("connect comming [%d/%d]", n, s.config.MaxConnection)
 		if int(n) > s.config.MaxConnection {
 			atomic.AddInt32(&s.currentConnection, -1)
 			http.Error(w, "too many connections", http.StatusServiceUnavailable)
