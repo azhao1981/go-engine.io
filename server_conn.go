@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -350,6 +351,11 @@ func (c *serverConn) setState(state state) {
 }
 
 func (c *serverConn) pingLoop() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Defer error in pingLoop: %v", err)
+		}
+	}()
 	lastPing := time.Now()
 	lastTry := lastPing
 	for {
