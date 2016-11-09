@@ -1,7 +1,7 @@
 package engineio
 
 import (
-	"github.com/googollee/go-engine.io/parser"
+	"github.com/azhao1981/go-engine.io/parser"
 	"io"
 	"sync"
 )
